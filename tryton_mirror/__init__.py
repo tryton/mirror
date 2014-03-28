@@ -123,10 +123,12 @@ class CommandHandler(cmd.Cmd):
             self._make_bookmarks(hg_repo)
             r = envoy.run(
                 'hg --cwd=%s push %s' % (
-                    os.path.join(HG_CACHE, hg_module), 
+                    os.path.join(HG_CACHE, hg_module),
                     os.path.abspath(os.path.join(GIT_CACHE, git_name))
                 )
             )
+            print r.std_out
+            print r.std_err
 
     def _get_default_remote(self, git_name):
         return "git@github.com:tryton/%s.git" % git_name
