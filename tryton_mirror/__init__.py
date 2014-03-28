@@ -20,8 +20,8 @@ REPOS = [
     ('proteus', 'proteus'),
     ('neso', 'neso'),
 
-    # Modules
-    ('modules/party', 'party'),
+    # Selected sandbox modules
+    ('sandbox/sao', 'sao'),
 
 ]
 
