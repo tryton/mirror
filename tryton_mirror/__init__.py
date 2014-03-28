@@ -144,7 +144,7 @@ class CommandHandler(cmd.Cmd):
             for remote in remotes:
                 print "Remote: %s" % remote
                 r = envoy.run(
-                    'git --git-dir=%s/%s/.git push %s' % (
+                    'git --git-dir=%s/%s/.git push --all %s' % (
                         GIT_CACHE, git_name, remote
                     )
                 )
