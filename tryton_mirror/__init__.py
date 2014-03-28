@@ -92,7 +92,7 @@ class CommandHandler(cmd.Cmd):
         Pull all repos one by one
         """
         for hg_module, git_name in REPOS:
-            envoy.run('cd %s && hg pull -u')
+            envoy.run('hg --cwd %s pull -u' % os.path.join(HG_CACHE, hg_module))
 
     def _make_bookmarks(self, repo):
         """
@@ -111,8 +111,11 @@ class CommandHandler(cmd.Cmd):
         for hg_module, git_name in REPOS:
             hg_repo = hgapi.Repo(os.path.join(HG_CACHE, hg_module))
             self._make_bookmarks(hg_repo)
-            hg_repo.hg_push(
-                '%s' % os.path.abspath(os.path.join(GIT_CACHE, git_name))
+            r = envoy.run(
+                'hg --cwd=%s push %s' % (
+                    os.path.join(HG_CACHE, hg_module), 
+                    os.path.abspath(os.path.join(GIT_CACHE, git_name))
+                )
             )
 
     def _get_default_remote(self, git_name):
