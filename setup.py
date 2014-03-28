@@ -13,9 +13,13 @@ setuptools.setup(
         'tryton_mirror',
     ],
     install_requires=[
-        'mercurial', 'hg-git', 'envoy'
+        'mercurial', 'hg-git', 'envoy', 'requests', 'beautifulsoup4', 'PyGithub'
     ],
-    scripts=['scripts/tryton_mirror', 'scripts/tryton_mirror_sync'],
+    scripts=[
+        'scripts/tryton_mirror',
+        'scripts/tryton_mirror_sync',
+        'scripts/tryton_create_repos',
+    ],
     license='BSD License',
     zip_safe=False,
     keywords='tryton hg git mirror',

@@ -1,9 +1,14 @@
 import os
+import re
 import cmd
+import getpass
 import ConfigParser
 
 import envoy
 import hgapi
+import requests
+from bs4 import BeautifulSoup
+from github import Github, UnknownObjectException
 
 # The repositories that need to be mirrored.
 # The format:
@@ -12,7 +17,12 @@ import hgapi
 REPOS = [
     ('trytond', 'trytond'),
     ('tryton', 'tryton'),
+    ('proteus', 'proteus'),
+    ('neso', 'neso'),
+
+    # Modules
     ('modules/party', 'party'),
+
 ]
 
 # Canonical source base_url
@@ -138,6 +148,61 @@ class CommandHandler(cmd.Cmd):
                 )
                 print r.std_out
                 print r.std_err
+
+
+class RepoHandler(object):
+
+    github_client = None
+
+    @staticmethod
+    def get_tryton_module_names():
+        rv = requests.get('http://hg.tryton.org/modules/?sort=name')
+        html = BeautifulSoup(rv.content)
+        return [
+            row.td.text
+            for row in html.find_all('tr', class_=re.compile("parity"))
+        ]
+
+    def get_github_client(self):
+        """
+        Return an authenticated github client
+        """
+        if self.github_client:
+            return self.github_client
+
+        self.github_client = Github("tryton-mirror", getpass.getpass())
+        return self.github_client
+
+    def is_repo_on_github(self, repo_name):
+        github_client = self.get_github_client()
+        try:
+            github_client.get_repo('tryton/%s' % repo_name)
+        except UnknownObjectException:
+            return False
+        else:
+            return True
+
+    def create_repo(self, repo_name):
+        github_client = self.get_github_client()
+        tryton_org = github_client.get_organization('tryton')
+        return tryton_org.create_repo(repo_name, 'Mirror of %s' % repo_name)
+
+    def create_missing_repos(self):
+        repos = ['trytond', 'tryton', 'neso', 'proteus']
+        repos.extend(self.get_tryton_module_names())
+
+        github_client = self.get_github_client()
+        tryton_org = github_client.get_organization('tryton')
+        org_repos = [r.name for r in tryton_org.get_repos()]
+        for repo in repos:
+            if repo not in org_repos:
+                print "Create repo: %s" % repo
+                self.create_repo(repo)
+
+
+# Add the modules from tryton module list
+for module_name in RepoHandler.get_tryton_module_names():
+    REPOS.append(('modules/%s' % module_name, module_name))
 
 
 if __name__ == '__main__':
