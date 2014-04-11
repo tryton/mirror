@@ -162,7 +162,7 @@ class RepoHandler(object):
         html = BeautifulSoup(rv.content)
         return [
             row.td.text
-            for row in html.find_all('tr', class_=re.compile("parity"))
+            for row in html.body.find_all('tr')[1:]
         ]
 
     def get_github_client(self):
