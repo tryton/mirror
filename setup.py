@@ -13,7 +13,7 @@ setuptools.setup(
         'tryton_mirror',
     ],
     install_requires=[
-        'mercurial', 'hg-git', 'envoy', 'requests', 'beautifulsoup4', 'PyGithub'
+        'mercurial', 'hg-git', 'envoy', 'requests', 'beautifulsoup4', 'PyGithub', 'hgapi'
     ],
     scripts=[
         'scripts/tryton_mirror',
