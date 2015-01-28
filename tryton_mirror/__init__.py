@@ -163,10 +163,16 @@ class RepoHandler(object):
     def get_tryton_module_names():
         rv = requests.get('http://hg.tryton.org/modules/?sort=name')
         html = BeautifulSoup(rv.content)
-        return list(set([
+        negatives = set([
+            'modules',
+            'tpf',
+            'sandbox',
+            '/',
+        ])
+        return sorted(list(set([
             row.td.text
             for row in html.body.find_all('tr')[1:]
-        ]))
+        ]) - negatives))
 
     def get_github_client(self):
         """
