@@ -1,10 +1,11 @@
 import os
 import re
 import cmd
+import shlex
+import subprocess
 import getpass
 import ConfigParser
 
-import envoy
 import hgapi
 import requests
 from bs4 import BeautifulSoup
@@ -58,7 +59,9 @@ class CommandHandler(cmd.Cmd):
         for hg_module, git_name in REPOS:
             git_repo_dir = os.path.join(GIT_CACHE, git_name)
             if not os.path.exists(git_repo_dir):
-                envoy.run('git init %s' % git_repo_dir)
+                subprocess.Popen(
+                    shlex.split('git init %s' % git_repo_dir)
+                ).wait()
 
     def do_clone_all(self, line=None):
         """
@@ -71,13 +74,12 @@ class CommandHandler(cmd.Cmd):
                 continue
 
             repo_url = '/'.join([HG_BASE_URL, hg_module])
-            print "Clone repo"
-            r = envoy.run('hg clone %s %s/%s' % (
+            cmd = 'hg clone %s %s/%s' % (
                 repo_url, HG_CACHE, hg_module,
-            ))
-            print r.std_out
-            print r.std_err
-            hgrc = os.path.join(HG_CACHE, hg_module, '.hg/hgrc')
+            )
+            subprocess.Popen(shlex.split(cmd)).wait()
+
+            hgrc = os.path.join('.', HG_CACHE, hg_module, '.hg/hgrc')
 
             config = ConfigParser.ConfigParser()
             config.readfp(open(hgrc))
@@ -102,7 +104,9 @@ class CommandHandler(cmd.Cmd):
         Pull all repos one by one
         """
         for hg_module, git_name in REPOS:
-            envoy.run('hg --cwd %s pull -u' % os.path.join(HG_CACHE, hg_module))
+            subprocess.Popen(
+                shlex.split('hg --cwd %s pull -u' % os.path.join(HG_CACHE, hg_module))
+            ).wait()
 
     def _make_bookmarks(self, repo):
         """
@@ -119,16 +123,15 @@ class CommandHandler(cmd.Cmd):
         Move from hg to local git repo
         """
         for hg_module, git_name in REPOS:
+            print "HG -> GIT: %s" % hg_module
             hg_repo = hgapi.Repo(os.path.join(HG_CACHE, hg_module))
             self._make_bookmarks(hg_repo)
-            r = envoy.run(
-                'hg --cwd=%s push %s' % (
+            subprocess.Popen(
+                shlex.split('hg --cwd=%s push %s' % (
                     os.path.join(HG_CACHE, hg_module),
                     os.path.abspath(os.path.join(GIT_CACHE, git_name))
-                )
-            )
-            print r.std_out
-            print r.std_err
+                ))
+            ).wait()
 
     def _get_default_remote(self, git_name):
         return "git@github.com:tryton/%s.git" % git_name
@@ -143,13 +146,13 @@ class CommandHandler(cmd.Cmd):
             remotes.extend(ADDITIONAL_REMOTES.get('git_name', []))
             for remote in remotes:
                 print "Remote: %s" % remote
-                r = envoy.run(
-                    'git --git-dir=%s/%s/.git push --mirror %s' % (
-                        GIT_CACHE, git_name, remote
+                subprocess.Popen(
+                    shlex.split(
+                        'git --git-dir=%s/%s/.git push --mirror %s' % (
+                            GIT_CACHE, git_name, remote
+                        )
                     )
-                )
-                print r.std_out
-                print r.std_err
+                ).wait()
 
 
 class RepoHandler(object):
