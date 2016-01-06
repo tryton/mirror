@@ -24,7 +24,7 @@ REPOS = [
 ]
 
 # Canonical source base_url
-HG_BASE_URL = 'http://hg.tryton.org'
+HG_BASE_URL = 'https://hg.tryton.org'
 
 # The directory where the mercurial repos should be cloned to
 HG_CACHE = 'hg'
