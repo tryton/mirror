@@ -8,7 +8,6 @@ import ConfigParser
 
 import hgapi
 import requests
-from bs4 import BeautifulSoup
 from github import Github, UnknownObjectException
 
 # The repositories that need to be mirrored.
@@ -161,18 +160,8 @@ class RepoHandler(object):
 
     @staticmethod
     def get_tryton_module_names():
-        rv = requests.get('http://hg.tryton.org/modules/?sort=name')
-        html = BeautifulSoup(rv.content)
-        negatives = set([
-            'modules',
-            'tpf',
-            'sandbox',
-            '/',
-        ])
-        return sorted(list(set([
-            row.td.text
-            for row in html.body.find_all('tr')[1:]
-        ]) - negatives))
+        rv = requests.get('https://downloads.tryton.org/modules.txt')
+        return rv.text.splitlines()
 
     def get_github_client(self):
         """
