@@ -176,7 +176,8 @@ class RepoHandler(object):
     def create_repo(self, repo_name):
         github_client = self.get_github_client()
         tryton_org = github_client.get_organization('tryton')
-        return tryton_org.create_repo(repo_name, 'Mirror of %s' % repo_name)
+        return tryton_org.create_repo(repo_name, 'Mirror of %s' % repo_name,
+            has_wiki=False, has_issues=False)
 
     def create_missing_repos(self):
         repos = ['trytond', 'tryton', 'neso', 'proteus']
@@ -184,12 +185,13 @@ class RepoHandler(object):
 
         github_client = self.get_github_client()
         tryton_org = github_client.get_organization('tryton')
-        org_repos = [r.name for r in tryton_org.get_repos()]
-        for repo in repos:
-            if repo not in org_repos:
-                print "Create repo: %s" % repo
-                self.create_repo(repo)
-
+        org_repos = {r.name: r for r in tryton_org.get_repos()}
+        for repo_name in repos:
+            repo = org_repos.get(repo_name)
+            if not repo:
+                self.create_repo(repo_name)
+            elif repo.has_wiki or repo.has_issues:
+                repo.edit(repo_name, has_wiki=False, has_issues=False)
 
 # Add the modules from tryton module list
 for module_name in RepoHandler.get_tryton_module_names():
