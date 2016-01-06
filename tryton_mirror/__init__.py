@@ -19,9 +19,7 @@ REPOS = [
     ('tryton', 'tryton'),
     ('proteus', 'proteus'),
     ('neso', 'neso'),
-
-    # Selected sandbox modules
-    ('sandbox/sao', 'sao'),
+    ('sao', 'sao'),
 
 ]
 
