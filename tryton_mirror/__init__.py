@@ -168,7 +168,7 @@ class RepoHandler(object):
         if self.github_client:
             return self.github_client
 
-        self.github_client = Github("tryton-mirror", getpass.getpass())
+        self.github_client = Github("tryton-mirror-keeper", getpass.getpass())
         return self.github_client
 
     def is_repo_on_github(self, repo_name):
