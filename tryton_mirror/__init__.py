@@ -8,7 +8,6 @@ import ConfigParser
 
 import hgapi
 import requests
-from bs4 import BeautifulSoup
 from github import Github, UnknownObjectException
 
 # The repositories that need to be mirrored.
@@ -20,14 +19,12 @@ REPOS = [
     ('tryton', 'tryton'),
     ('proteus', 'proteus'),
     ('neso', 'neso'),
-
-    # Selected sandbox modules
-    ('sandbox/sao', 'sao'),
+    ('sao', 'sao'),
 
 ]
 
 # Canonical source base_url
-HG_BASE_URL = 'http://hg.tryton.org'
+HG_BASE_URL = 'https://hg.tryton.org'
 
 # The directory where the mercurial repos should be cloned to
 HG_CACHE = 'hg'
@@ -59,25 +56,22 @@ class CommandHandler(cmd.Cmd):
         for hg_module, git_name in REPOS:
             git_repo_dir = os.path.join(GIT_CACHE, git_name)
             if not os.path.exists(git_repo_dir):
-                subprocess.Popen(
-                    shlex.split('git init %s' % git_repo_dir)
-                ).wait()
+                subprocess.check_call(
+                    shlex.split('git init -q %s' % git_repo_dir))
 
     def do_clone_all(self, line=None):
         """
         Clone all hg repos
         """
         for hg_module, git_name in REPOS:
-            print "Setup: %s" % hg_module
             if os.path.exists(os.path.join(HG_CACHE, hg_module)):
-                print "%s is already setup. Continue" % hg_module
                 continue
 
             repo_url = '/'.join([HG_BASE_URL, hg_module])
-            cmd = 'hg clone %s %s/%s' % (
+            cmd = 'hg clone -q %s %s/%s' % (
                 repo_url, HG_CACHE, hg_module,
             )
-            subprocess.Popen(shlex.split(cmd)).wait()
+            subprocess.check_call(shlex.split(cmd))
 
             hgrc = os.path.join('.', HG_CACHE, hg_module, '.hg/hgrc')
 
@@ -104,9 +98,10 @@ class CommandHandler(cmd.Cmd):
         Pull all repos one by one
         """
         for hg_module, git_name in REPOS:
-            subprocess.Popen(
-                shlex.split('hg --cwd %s pull -u' % os.path.join(HG_CACHE, hg_module))
-            ).wait()
+            subprocess.check_call(
+                shlex.split('hg --cwd %s pull -u -q' %
+                    os.path.join(HG_CACHE, hg_module))
+                )
 
     def _make_bookmarks(self, repo):
         """
@@ -123,15 +118,15 @@ class CommandHandler(cmd.Cmd):
         Move from hg to local git repo
         """
         for hg_module, git_name in REPOS:
-            print "HG -> GIT: %s" % hg_module
             hg_repo = hgapi.Repo(os.path.join(HG_CACHE, hg_module))
             self._make_bookmarks(hg_repo)
-            subprocess.Popen(
-                shlex.split('hg --cwd=%s push %s' % (
+            cmd = shlex.split('hg --cwd=%s push -q %s' % (
                     os.path.join(HG_CACHE, hg_module),
                     os.path.abspath(os.path.join(GIT_CACHE, git_name))
-                ))
-            ).wait()
+                    )) 
+            retcode = subprocess.call(cmd)
+            if retcode not in [0, 1]:
+                raise subprocess.CalledProcessError(retcode, cmd)
 
     def _get_default_remote(self, git_name):
         return "git@github.com:tryton/%s.git" % git_name
@@ -141,18 +136,13 @@ class CommandHandler(cmd.Cmd):
         Push the code to the remotes in a git repository
         """
         for hg_module, git_name in REPOS:
-            print "Pushing %s to remotes" % hg_module
             remotes = [self._get_default_remote(git_name)]
             remotes.extend(ADDITIONAL_REMOTES.get('git_name', []))
             for remote in remotes:
-                print "Remote: %s" % remote
-                subprocess.Popen(
+                subprocess.check_call(
                     shlex.split(
-                        'git --git-dir=%s/%s/.git push --mirror %s' % (
-                            GIT_CACHE, git_name, remote
-                        )
-                    )
-                ).wait()
+                        'git --git-dir=%s/%s/.git push -q --mirror %s' % (
+                            GIT_CACHE, git_name, remote)))
 
 
 class RepoHandler(object):
@@ -161,18 +151,8 @@ class RepoHandler(object):
 
     @staticmethod
     def get_tryton_module_names():
-        rv = requests.get('http://hg.tryton.org/modules/?sort=name')
-        html = BeautifulSoup(rv.content)
-        negatives = set([
-            'modules',
-            'tpf',
-            'sandbox',
-            '/',
-        ])
-        return sorted(list(set([
-            row.td.text
-            for row in html.body.find_all('tr')[1:]
-        ]) - negatives))
+        rv = requests.get('https://downloads.tryton.org/modules.txt')
+        return rv.text.splitlines()
 
     def get_github_client(self):
         """
@@ -181,7 +161,7 @@ class RepoHandler(object):
         if self.github_client:
             return self.github_client
 
-        self.github_client = Github("tryton-mirror", getpass.getpass())
+        self.github_client = Github("tryton-mirror-keeper", getpass.getpass())
         return self.github_client
 
     def is_repo_on_github(self, repo_name):
@@ -196,7 +176,8 @@ class RepoHandler(object):
     def create_repo(self, repo_name):
         github_client = self.get_github_client()
         tryton_org = github_client.get_organization('tryton')
-        return tryton_org.create_repo(repo_name, 'Mirror of %s' % repo_name)
+        return tryton_org.create_repo(repo_name, 'Mirror of %s' % repo_name,
+            has_wiki=False, has_issues=False)
 
     def create_missing_repos(self):
         repos = ['trytond', 'tryton', 'neso', 'proteus']
@@ -204,12 +185,13 @@ class RepoHandler(object):
 
         github_client = self.get_github_client()
         tryton_org = github_client.get_organization('tryton')
-        org_repos = [r.name for r in tryton_org.get_repos()]
-        for repo in repos:
-            if repo not in org_repos:
-                print "Create repo: %s" % repo
-                self.create_repo(repo)
-
+        org_repos = {r.name: r for r in tryton_org.get_repos()}
+        for repo_name in repos:
+            repo = org_repos.get(repo_name)
+            if not repo:
+                self.create_repo(repo_name)
+            elif repo.has_wiki or repo.has_issues:
+                repo.edit(repo_name, has_wiki=False, has_issues=False)
 
 # Add the modules from tryton module list
 for module_name in RepoHandler.get_tryton_module_names():
