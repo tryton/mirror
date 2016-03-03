@@ -173,25 +173,28 @@ class RepoHandler(object):
         else:
             return True
 
-    def create_repo(self, repo_name):
+    def create_repo(self, repo_name, homepage=None):
         github_client = self.get_github_client()
         tryton_org = github_client.get_organization('tryton')
         return tryton_org.create_repo(repo_name, 'Mirror of %s' % repo_name,
-            has_wiki=False, has_issues=False)
+            homepage=homepage, has_wiki=False, has_issues=False)
 
     def create_missing_repos(self):
         repos = ['trytond', 'tryton', 'neso', 'proteus']
         repos.extend(self.get_tryton_module_names())
+        git2hg = {git_name: hg_module for hg_module, git_name in REPOS}
 
         github_client = self.get_github_client()
         tryton_org = github_client.get_organization('tryton')
         org_repos = {r.name: r for r in tryton_org.get_repos()}
         for repo_name in repos:
+            homepage = '/'.join([HG_BASE_URL, git2hg[repo_name]])
             repo = org_repos.get(repo_name)
             if not repo:
-                self.create_repo(repo_name)
-            elif repo.has_wiki or repo.has_issues:
-                repo.edit(repo_name, has_wiki=False, has_issues=False)
+                self.create_repo(repo_name, homepage)
+            elif repo.has_wiki or repo.has_issues or repo.homepage != homepage:
+                repo.edit(repo_name, homepage=homepage,
+                    has_wiki=False, has_issues=False)
 
 # Add the modules from tryton module list
 for module_name in RepoHandler.get_tryton_module_names():
