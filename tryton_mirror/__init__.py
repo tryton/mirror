@@ -194,9 +194,11 @@ class RepoHandler(object):
             if not repo:
                 self.create_repo(repo_name, homepage)
                 org_repos[repo_name] = repo
-            elif repo.has_wiki or repo.has_issues or repo.homepage != homepage:
+            elif (repo.has_wiki or repo.has_issues or repo.homepage != homepage
+                    or (repo.default_branch != 'develop'
+                        and repo.get_branch('develop'))):
                 repo.edit(repo_name, homepage=homepage,
-                    has_wiki=False, has_issues=False)
+                    has_wiki=False, has_issues=False, default_branch='develop')
 
 # Add the modules from tryton module list
 for module_name in RepoHandler.get_tryton_module_names():
