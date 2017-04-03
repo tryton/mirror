@@ -1,5 +1,4 @@
 import os
-import re
 import cmd
 import shlex
 import subprocess
@@ -124,7 +123,7 @@ class CommandHandler(cmd.Cmd):
             cmd = shlex.split('hg --cwd=%s push -q %s' % (
                     os.path.join(HG_CACHE, hg_module),
                     os.path.abspath(os.path.join(GIT_CACHE, git_name))
-                    )) 
+                    ))
             retcode = subprocess.call(cmd)
             if retcode not in [0, 1]:
                 raise subprocess.CalledProcessError(retcode, cmd)
