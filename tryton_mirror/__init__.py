@@ -193,6 +193,7 @@ class RepoHandler(object):
             repo = org_repos.get(repo_name)
             if not repo:
                 self.create_repo(repo_name, homepage)
+                org_repos[repo_name] = repo
             elif repo.has_wiki or repo.has_issues or repo.homepage != homepage:
                 repo.edit(repo_name, homepage=homepage,
                     has_wiki=False, has_issues=False)
