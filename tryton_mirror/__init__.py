@@ -173,6 +173,13 @@ class RepoHandler(object):
         else:
             return True
 
+    @staticmethod
+    def has_branch(repo, name):
+        for branch in repo.get_branches():
+            if branch.name == name:
+                return True
+        return False
+
     def create_repo(self, repo_name, homepage=None):
         github_client = self.get_github_client()
         tryton_org = github_client.get_organization('tryton')
@@ -195,7 +202,7 @@ class RepoHandler(object):
                 org_repos[repo_name] = repo
             elif (repo.has_wiki or repo.has_issues or repo.homepage != homepage
                     or (repo.default_branch != 'develop'
-                        and repo.get_branch('develop'))):
+                        and self.has_branch(repo, 'develop'))):
                 repo.edit(repo_name, homepage=homepage,
                     has_wiki=False, has_issues=False, default_branch='develop')
 
