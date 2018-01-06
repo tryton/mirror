@@ -188,8 +188,8 @@ class RepoHandler(object):
             homepage=homepage, has_wiki=False, has_issues=False)
 
     def create_missing_repos(self):
-        repos = [g for r, g in REPOS]
-        repos.extend(self.get_tryton_module_names())
+        repos = {g for r, g in REPOS}
+        repos.update(self.get_tryton_module_names())
         git2hg = {git_name: hg_module for hg_module, git_name in REPOS}
 
         github_client = self.get_github_client()
