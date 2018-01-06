@@ -21,6 +21,7 @@ REPOS = [
     ('sao', 'sao'),
     ('cookiecutter', 'cookiecutter-tryton'),
     ('chronos', 'chronos'),
+    ('trytond-gis', 'trytond-gis'),
 ]
 
 # Canonical source base_url
