@@ -17,7 +17,6 @@ REPOS = [
     ('trytond', 'trytond'),
     ('tryton', 'tryton'),
     ('proteus', 'proteus'),
-    ('neso', 'neso'),
     ('sao', 'sao'),
     ('cookiecutter', 'cookiecutter-tryton'),
     ('chronos', 'chronos'),
