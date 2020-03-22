@@ -3,6 +3,7 @@ import cmd
 import shlex
 import subprocess
 import getpass
+import io
 import ConfigParser
 
 import hgapi
@@ -161,7 +162,10 @@ class RepoHandler(object):
         if self.github_client:
             return self.github_client
 
-        self.github_client = Github("tryton-mirror-keeper", getpass.getpass())
+        self.github_client = Github(
+            io.open(os.path.expanduser(
+                    os.path.join('~', '.config', 'mirror_token'))
+                ).read().strip())
         return self.github_client
 
     def is_repo_on_github(self, repo_name):

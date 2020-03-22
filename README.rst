@@ -3,6 +3,7 @@ Tryton - mercurial to git mirror
 
 This package provides a wrapper around the hg-git library to mirror the
 tryton repositories to github.
+It uses the access token stored in `~/.config/mirror_token`.
 
 
 Using through CLI
