@@ -4,7 +4,7 @@ import shlex
 import subprocess
 import getpass
 import io
-import ConfigParser
+import configparser
 
 import hgapi
 import requests
@@ -76,7 +76,7 @@ class CommandHandler(cmd.Cmd):
 
             hgrc = os.path.join('.', HG_CACHE, hg_module, '.hg/hgrc')
 
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.readfp(open(hgrc))
 
             # Set the configuration for extensions and bookmarks
