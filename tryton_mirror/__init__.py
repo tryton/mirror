@@ -91,7 +91,7 @@ class CommandHandler(cmd.Cmd):
                 config.add_section('git')
             config.set('git', 'branch_bookmark_suffix', '_bookmark')
 
-            with open(hgrc, 'wb') as configfile:
+            with open(hgrc, 'w') as configfile:
                 config.write(configfile)
 
     def do_pull_all(self, line=None):
